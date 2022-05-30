@@ -17,7 +17,7 @@ index fef1af4..b2ab1dc 100644
  INSTALL_LMOD= $(INSTALL_TOP)/share/lua/$V
  INSTALL_CMOD= $(INSTALL_TOP)/lib/lua/$V
  
-@@ -104,3 +104,19 @@ pc:
+@@ -104,3 +104,18 @@ pc:
  .PHONY: all $(PLATS) help test clean install uninstall local dummy echo pc
  
  # (end of Makefile)
@@ -26,7 +26,6 @@ index fef1af4..b2ab1dc 100644
 +
 +export V
 +export LIBTOOL = libtool --quiet --tag=CC
-+export LIBTOOLCPP = libtool --quiet --tag=CXX
 +# See libtool manual about how to set this
 +
 +gentoo_clean:
@@ -54,29 +53,26 @@ index 1907381..e53ed26 100644
  LUAC_O=	luac.o
  
  ALL_O= $(BASE_O) $(LUA_O) $(LUAC_O)
-@@ -60,11 +60,13 @@ $(LUA_A): $(BASE_O)
+@@ -60,11 +60,11 @@ $(LUA_A): $(BASE_O)
 	$(AR) $@ $(BASE_O)
 	$(RANLIB) $@
  
 -$(LUA_T): $(LUA_O) $(LUA_A)
 +origin$(LUA_T): $(LUA_O) $(LUA_A)
 	$(CC) -o $@ $(LDFLAGS) $(LUA_O) $(LUA_A) $(LIBS)
-+	$(CXX) -o $*-c++.o $(LDFLAGS) $(LUA_O) $(LUA_A) $(LIBS)
  
 -$(LUAC_T): $(LUAC_O) $(LUA_A)
 +origin$(LUAC_T): $(LUAC_O) $(LUA_A)
 	$(CC) -o $@ $(LDFLAGS) $(LUAC_O) $(LUA_A) $(LIBS)
-+	$(CXX) -o $*-c++.o $(LDFLAGS) $(LUAC_O) $(LUA_A) $(LIBS)
  
  test:
 	./$(LUA_T) -v
-@@ -220,3 +222,38 @@ lzio.o: lzio.c lprefix.h lua.h luaconf.h llimits.h lmem.h lstate.h \
+@@ -220,3 +222,39 @@ lzio.o: lzio.c lprefix.h lua.h luaconf.h llimits.h lmem.h lstate.h \
   lobject.h ltm.h lzio.h
  
  # (end of Makefile)
 +
 +export LIBTOOL = libtool --quiet --tag=CC
-+export LIBTOOLCPP = libtool --quiet --tag=CXX
 +export LIB_VERSION = 6:1:1
 +
 +# The following rules use libtool for compiling and linking in order to
@@ -89,14 +85,16 @@ index 1907381..e53ed26 100644
 +
 +%.lo %.o: %.c
 +	$(LIBTOOL) --mode=compile $(CC) -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
-+	$(LIBTOOLCPP) --mode=compile $(CXX) -c $(CPPFLAGS) $(CFLAGS) $(CXXFLAGS) -o $*-c++.o $<
++
++%-c++.lo %-c++.o: %.c
++	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) -c $(CPPFLAGS) $(CFLAGS) $(CXXFLAGS) -o $*-c++.o $<
 +
 +$(LIB_NAME): $(LIB_OBJS)
 +	$(LIBTOOL) --mode=link $(CC) -version-info $(LIB_VERSION) \
 +            -rpath $(RPATH) $(LDFLAGS) -o $(LIB_NAME) $(LIB_OBJS) $(LIB_LIBS)
 +
-+$(LIBCPP_NAME): $(LIB_OBJS)
-+	$(LIBTOOLCPP) --mode=link $(CXX) -version-info $(LIB_VERSION) \
++$(LIBCPP_NAME): $(LIBCPP_OBJS)
++	$(LIBTOOL) --tag=CXX --mode=link $(CXX) -version-info $(LIB_VERSION) \
 +            -rpath $(RPATH) $(LDFLAGS) -o $(LIBCPP_NAME) $(LIBCPP_OBJS) $(LIB_LIBS)
 +
 +$(LUA_T): $(LUA_O:.o=.lo) $(LIB_NAME)
